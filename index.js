@@ -25,7 +25,7 @@ class KafkaConnection extends Connection {
     }
 
     enqueue(messages, callback) {
-        console.log(`${this.id}: enqueuing ${JSON.stringify(messages)}`);
+        //console.log(`${this.id}: enqueuing ${JSON.stringify(messages)}`);
         if (!messages || messages.length === 0) return callback();
 
         let key;
@@ -56,7 +56,7 @@ class KafkaConnection extends Connection {
                 message.body = JSON.parse(message.value);
                 return callback(null, message);
             } catch (e) {
-                console.log('invalid JSON: ' + message.value);
+                console.error('invalid JSON: ' + message.value);
             }
         });
         this.consumerGroup.on('error', callback);
