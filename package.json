@@ -1,6 +1,6 @@
 {
   "name": "topological-kafka",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "kafka-node": "^2.3.0",
-    "topological": "^1.0.8"
+    "topological": "^1.0.15"
   },
   "devDependencies": {
     "mocha": "^4.0.1"

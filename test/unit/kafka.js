@@ -2,8 +2,9 @@ const assert = require('assert');
 const fixtures = require('../fixtures');
 
 describe('KafkaConnection', function() {
-    it('can queue and dequeue messages', done => {
-         fixtures.connection.start(err => {
+    it('can enqueue, pause, resume, and stream messages', done => {
+        let resumed = false;
+        fixtures.connection.start(err => {
             assert(!err);
 
             fixtures.connection.stream((err, message) => {
@@ -11,17 +12,31 @@ describe('KafkaConnection', function() {
                 assert(message);
 
                 assert(message.body.number, 1);
+                assert(resumed);
                 return done();
             });
 
-            fixtures.connection.enqueue([{
-                body: {
-                    userId: "user1",
-                    number: 1
-                }
-            }], err => {
-                assert(!err);
-            });
-         });
+            setTimeout(() => {
+                fixtures.connection.pause(err => {
+                    assert(!err);
+                    setTimeout(() => {
+                        fixtures.connection.enqueue([{
+                            body: {
+                                userId: "user1",
+                                number: 1
+                            }
+                        }], err => {
+                            assert(!err);
+                            setTimeout(() => {
+                                fixtures.connection.resume(err => {
+                                    assert(!err);
+                                    resumed = true;
+                                });
+                            }, 1000);
+                        });
+                    }, 1000);
+                });
+            }, 1000);
+        });
     });
 });

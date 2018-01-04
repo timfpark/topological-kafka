@@ -7,9 +7,6 @@ const KEYED_PARTITIONER = 3;
 class KafkaConnection extends Connection {
     constructor(config) {
         super(config);
-
-        // this.config.maxMessagesOutstanding = this.config.maxMessagesOutstanding || 5;
-        this.supportsStreaming = true;
     }
 
     start(callback) {
@@ -24,8 +21,30 @@ class KafkaConnection extends Connection {
         });
     }
 
+    resume(callback) {
+        if (!this.consumerGroup) return callback(new Error("Not yet streaming, cannot resume"));
+
+        super.resume(err => {
+            if (err) return callback(err);
+
+            this.consumerGroup.resume();
+            if (callback) return callback();
+        });
+    }
+
+    pause(callback) {
+        if (!this.consumerGroup) return callback(new Error("Not yet streaming, cannot pause"));
+
+        super.pause(err => {
+            if (err) return callback(err);
+
+            this.consumerGroup.pause();
+            if (callback) return callback();
+        });
+
+    }
+
     enqueue(messages, callback) {
-        //console.log(`${this.id}: enqueuing ${JSON.stringify(messages)}`);
         if (!messages || messages.length === 0) return callback();
 
         let key;
@@ -56,7 +75,8 @@ class KafkaConnection extends Connection {
                 message.body = JSON.parse(message.value);
                 return callback(null, message);
             } catch (e) {
-                console.error('invalid JSON: ' + message.value);
+                console.error('parsing message failed: ' + e);
+                return callback(e);
             }
         });
         this.consumerGroup.on('error', callback);
