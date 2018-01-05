@@ -47,17 +47,17 @@ class KafkaConnection extends Connection {
     enqueue(messages, callback) {
         if (!messages || messages.length === 0) return callback();
 
-        let key;
-        let keyedMessages = messages.map(message => {
-            key = message.body[this.config.keyField];
-            return new KeyedMessage(key, JSON.stringify(message.body));
-        });
+        async.each(messages, (message, messageCallback) => {
+            let key = message.body[this.config.keyField];
+            let keyedMessage = new KeyedMessage(key, JSON.stringify(message.body));
 
-        this.producer.send([{
-            topic: this.config.topic,
-            key,
-            messages: keyedMessages
-        }], callback);
+            this.producer.send([{
+                topic: this.config.topic,
+                key,
+                messages: [keyedMessage]
+            }], messageCallback);
+
+        }, callback);
     }
 
     stream(callback) {
