@@ -9,10 +9,10 @@
   "author": "Tim Park",
   "license": "MIT",
   "dependencies": {
-    "kafka-node": "^2.3.0",
-    "topological": "^1.0.18"
+    "kafka-node": "^2.6.1",
+    "topological": "^1.0.30"
   },
   "devDependencies": {
-    "mocha": "^4.0.1"
+    "mocha": "^5.1.1"
   }
 }
