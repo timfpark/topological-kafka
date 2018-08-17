@@ -2,13 +2,13 @@ const KafkaConnection = require('../index');
 
 module.exports = {
     connection: new KafkaConnection({
-        id: "kafkaConnection",
+        id: 'kafkaConnection',
         config: {
-            id: "worker1",
-            groupId: "featureAugmentation",
-            endpoint: "localhost:2181",
-            keyField: "userId",
-            topic: "test2",
+            id: 'topological-kafka',
+            groupId: 'topological-kafka',
+            endpoint: 'localhost:2181',
+            keyField: 'userId',
+            topic: 'topological-kafka'
         }
-     })
+    })
 };

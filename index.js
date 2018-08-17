@@ -1,6 +1,6 @@
 const async = require('async'),
-      { Client, KeyedMessage, Producer, ConsumerGroup } = require('kafka-node'),
-      { Connection } = require("topological");
+    { Client, KeyedMessage, Producer, ConsumerGroup } = require('kafka-node'),
+    { Connection } = require('topological');
 
 const KEYED_PARTITIONER = 3;
 
@@ -22,7 +22,8 @@ class KafkaConnection extends Connection {
     }
 
     resume(callback) {
-        if (!this.consumerGroup) return callback(new Error("Not yet streaming, cannot resume"));
+        if (!this.consumerGroup)
+            return callback(new Error('Not yet streaming, cannot resume'));
 
         super.resume(err => {
             if (err) return callback(err);
@@ -33,7 +34,8 @@ class KafkaConnection extends Connection {
     }
 
     pause(callback) {
-        if (!this.consumerGroup) return callback(new Error("Not yet streaming, cannot pause"));
+        if (!this.consumerGroup)
+            return callback(new Error('Not yet streaming, cannot pause'));
 
         super.pause(err => {
             if (err) return callback(err);
@@ -41,41 +43,56 @@ class KafkaConnection extends Connection {
             this.consumerGroup.pause();
             if (callback) return callback();
         });
-
     }
 
     enqueue(messages, callback) {
         if (!messages || messages.length === 0) return callback();
 
-        async.each(messages, (message, messageCallback) => {
-            let key = message.body[this.config.keyField];
-            let keyedMessage = new KeyedMessage(key, JSON.stringify(message.body));
+        async.each(
+            messages,
+            (message, messageCallback) => {
+                let key = message.body[this.config.keyField];
+                let keyedMessage = new KeyedMessage(
+                    key,
+                    JSON.stringify(message.body)
+                );
 
-            this.producer.send([{
-                topic: this.config.topic,
-                key,
-                messages: [keyedMessage]
-            }], messageCallback);
-
-        }, callback);
+                this.producer.send(
+                    [
+                        {
+                            topic: this.config.topic,
+                            key,
+                            messages: [keyedMessage]
+                        }
+                    ],
+                    messageCallback
+                );
+            },
+            callback
+        );
     }
 
     stream(callback) {
-        this.consumerGroup = new ConsumerGroup({
-            id: this.config.id,
-            host: this.config.endpoint,
-            groupId: this.config.groupId,
-            sessionTimeout: this.config.sessionTimeout || 15000,
-            protocol: [this.config.protocol || 'roundrobin'],
-            fromOffset: this.config.startFromOffset || 'earliest'
-        }, [this.config.topic]);
+        this.consumerGroup = new ConsumerGroup(
+            {
+                id: this.config.id,
+                host: this.config.endpoint,
+                autoCommit: true,
+                autoCommitIntervalMs: 1000,
+                groupId: this.config.groupId,
+                sessionTimeout: this.config.sessionTimeout || 15000,
+                protocol: [this.config.protocol || 'roundrobin'],
+                fromOffset: this.config.startFromOffset || 'earliest'
+            },
+            [this.config.topic]
+        );
 
         this.consumerGroup.on('message', message => {
             try {
                 message.body = JSON.parse(message.value);
+
                 return callback(null, message);
             } catch (e) {
-                console.error('parsing message failed: ' + e);
                 return callback(e);
             }
         });
