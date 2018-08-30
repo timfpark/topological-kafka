@@ -79,7 +79,7 @@ class KafkaConnection extends Connection {
                 host: this.config.endpoint,
                 autoCommit: true,
                 autoCommitIntervalMs: 1000,
-                groupId: this.config.groupId,
+                groupId: this.config.groupId || this.parentNode.id,
                 sessionTimeout: this.config.sessionTimeout || 15000,
                 protocol: [this.config.protocol || 'roundrobin'],
                 fromOffset: this.config.startFromOffset || 'earliest'
