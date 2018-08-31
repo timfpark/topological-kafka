@@ -101,6 +101,7 @@ class KafkaConnection extends Connection {
                 host: this.config.endpoint,
                 autoCommit: true,
                 autoCommitIntervalMs: 1000,
+                fetchMaxBytes: this.config.fetchMaxBytes || 20 * 1024 * 1024,
                 groupId: this.config.groupId || this.parentNode.id,
                 sessionTimeout: this.config.sessionTimeout || 15000,
                 protocol: [this.config.protocol || 'roundrobin'],
