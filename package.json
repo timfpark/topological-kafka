@@ -1,10 +1,10 @@
 {
   "name": "topological-kafka",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --exit"
+    "test": "LOG_LEVEL=debug mocha --exit"
   },
   "author": "Tim Park",
   "license": "MIT",

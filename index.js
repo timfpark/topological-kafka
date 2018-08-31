@@ -2,6 +2,7 @@ const async = require('async'),
     { Client, KeyedMessage, Producer, ConsumerGroup } = require('kafka-node'),
     { Connection } = require('topological');
 
+const CYCLIC_PARTITIONER = 2;
 const KEYED_PARTITIONER = 3;
 
 class KafkaConnection extends Connection {
@@ -10,10 +11,14 @@ class KafkaConnection extends Connection {
     }
 
     start(callback) {
+        this.log.debug(`Kafka client connecting to ${this.config.endpoint}`);
         this.client = new Client(this.config.endpoint);
+
         this.producer = new Producer(this.client, {
             requireAcks: 1,
-            partitionerType: KEYED_PARTITIONER
+            partitionerType: this.config.keyField
+                ? KEYED_PARTITIONER
+                : CYCLIC_PARTITIONER
         });
 
         this.producer.on('ready', () => {
@@ -51,21 +56,38 @@ class KafkaConnection extends Connection {
         async.each(
             messages,
             (message, messageCallback) => {
-                let key = message.body[this.config.keyField];
-                let keyedMessage = new KeyedMessage(
-                    key,
-                    JSON.stringify(message.body)
-                );
+                let messageToSend;
+                let key;
+                if (this.config.keyField) {
+                    key = message.body[this.config.keyField];
+                    messageToSend = new KeyedMessage(
+                        key,
+                        JSON.stringify(message.body)
+                    );
+                } else {
+                    messageToSend = JSON.stringify(message.body);
+                }
 
                 this.producer.send(
                     [
                         {
                             topic: this.config.topic,
                             key,
-                            messages: [keyedMessage]
+                            messages: [messageToSend]
                         }
                     ],
-                    messageCallback
+                    err => {
+                        if (err) {
+                            this.log.error(`failed to enqueue message: ${err}`);
+                        } else {
+                            this.log.debug(
+                                `enqueued message: ${JSON.stringify(
+                                    message.body
+                                ).substr(0, 50)}`
+                            );
+                        }
+                        return messageCallback(err);
+                    }
                 );
             },
             callback
@@ -90,6 +112,13 @@ class KafkaConnection extends Connection {
         this.consumerGroup.on('message', message => {
             try {
                 message.body = JSON.parse(message.value);
+
+                this.log.debug(
+                    `dequeued message: ${JSON.stringify(message.body).substr(
+                        0,
+                        50
+                    )}`
+                );
 
                 return callback(null, message);
             } catch (e) {
